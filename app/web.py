@@ -337,7 +337,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 
 @app.get("/api/v1/import/preview/{file_id}")
-async def preview_import(file_id: str, source_type: str = "aws", network_view: str = "default", request: Request):
+async def preview_import(request: Request, file_id: str, source_type: str = "aws", network_view: str = "default"):
     """Preview import changes"""
     # Find the uploaded file
     files = list(UPLOAD_DIR.glob(f"{file_id}_*"))
@@ -418,8 +418,8 @@ def has_changes(existing: dict, new: NetworkImportModel) -> bool:
 
 
 @app.post("/api/v1/import/execute/{file_id}")
-async def execute_import(file_id: str, source_type: str, network_view: str = "default", 
-                        background_tasks: BackgroundTasks, request: Request):
+async def execute_import(request: Request, background_tasks: BackgroundTasks, file_id: str, 
+                        source_type: str, network_view: str = "default"):
     """Execute import in background"""
     # Create job
     job_id = str(uuid.uuid4())
