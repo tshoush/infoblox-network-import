@@ -1,218 +1,113 @@
 # InfoBlox Network Import Tool
 
-A comprehensive solution for importing networks from various cloud providers (AWS, Azure, GCP, Alibaba) into InfoBlox IPAM. The tool provides both CLI and web interfaces, with support for Extended Attributes mapping, overlap detection, and change preview.
+A comprehensive Python solution for importing networks from various cloud providers (AWS, Azure, GCP, Alibaba) into InfoBlox IPAM.
 
 ## Features
 
-- **Multi-Source Import**: Support for AWS, Azure, GCP, Alibaba, and custom CSV/Excel formats
-- **Dual Interface**: Command-line tool and web application
-- **Extended Attributes**: Automatic mapping of cloud tags to InfoBlox EAs
-- **Overlap Detection**: Identifies subnet conflicts before import
-- **Change Preview**: Review all changes before applying
-- **No Deletion Policy**: Never removes networks from InfoBlox
-- **Comprehensive Reporting**: Track missing networks and changes
-- **MCP Server**: Integration with Claude Desktop via Model Context Protocol
+- 🌐 **Multi-Source Import**: Support for AWS, Properties, and Custom CSV formats
+- 🖥️ **Dual Interface**: Command-line tool and web application
+- 🏷️ **Extended Attributes**: Automatic mapping of cloud tags to InfoBlox EAs
+- 🔍 **Overlap Detection**: Identifies subnet conflicts before import
+- 👁️ **Preview Mode**: Review all changes before applying
+- 🚫 **No Deletion Policy**: Never removes networks from InfoBlox
+- 📊 **Comprehensive Reporting**: Track changes and missing networks
+- 🔌 **MCP Server**: Integration with Claude Desktop via Model Context Protocol
 
-## Project Structure
+## Quick Start
 
-```
-infoblox-network-import/
-├── app/                    # Main application
-│   ├── core/              # Business logic
-│   │   ├── infoblox.py    # InfoBlox WAPI wrapper
-│   │   ├── models.py      # Data models
-│   │   └── parsers.py     # Cloud provider parsers
-│   ├── cli.py             # CLI application
-│   └── web.py             # Web application (FastAPI)
-├── mcp-server/            # MCP server for Claude Desktop
-├── templates/             # Report templates
-├── requirements.txt       # Python dependencies
-└── .env.example          # Environment variables template
-```
+### Prerequisites
+- Python 3.8+
+- Access to InfoBlox WAPI v2.13.1
+- InfoBlox credentials with network creation permissions
 
-## Installation
+### Installation
 
 1. Clone the repository:
 ```bash
-cd /Users/Shared/infoblox-network-import
+git clone https://github.com/YOUR_USERNAME/infoblox-network-import.git
+cd infoblox-network-import
 ```
 
-2. Create a virtual environment:
+2. Run setup:
 ```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+./setup.sh
 ```
 
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Configure environment:
+3. Configure InfoBlox credentials:
 ```bash
 cp .env.example .env
-# Edit .env with your InfoBlox credentials
+# Edit .env with your InfoBlox details
 ```
 
-## Usage
+### Usage
 
-### CLI Application
-
-1. Test connection:
+#### CLI Interface
 ```bash
+# Test connection
 python app/cli.py test-connection
+
+# Import networks (dry run)
+python app/cli.py import-networks -f example_aws_networks.csv -s aws --dry-run
+
+# Import networks (actual)
+python app/cli.py import-networks -f example_aws_networks.csv -s aws
+
+# List network views
+python app/cli.py list-network-views
 ```
 
-2. Import networks:
+#### Web Interface
 ```bash
-# Basic import
-python app/cli.py import-networks -f aws_networks.csv -s aws
-
-# With dry run
-python app/cli.py import-networks -f aws_networks.csv -s aws --dry-run
-
-# With custom EA mapping
-python app/cli.py import-networks -f aws_networks.csv -s aws -m ea_mappings.json
-```
-
-3. Generate EA mapping template:
-```bash
-python app/cli.py generate-mapping-template -s aws -o my_mappings.json
-```
-
-4. List Extended Attributes:
-```bash
-python app/cli.py list-eas
-```
-
-## AWS File Format
-
-The tool expects AWS network data in CSV or Excel format with these columns:
-- **AccountId**: AWS Account ID
-- **Region**: AWS Region
-- **VpcId**: VPC identifier
-- **Name**: Network name
-- **CidrBlock**: Network CIDR (e.g., 10.0.0.0/24)
-- **IsDefault**: Boolean flag
-- **State**: Network state
-- **Tags**: JSON string or key=value pairs
-
-Example Tags format:
-```json
-[{"Key": "Environment", "Value": "Production"}, {"Key": "Owner", "Value": "DevOps"}]
-```
-
-## Extended Attributes Mapping
-
-Create a mapping file to control how cloud tags map to InfoBlox EAs:
-
-```json
-{
-  "description": "EA mapping for AWS networks",
-  "mappings": [
-    {
-      "source_tag": "Environment",
-      "target_ea": "Environment",
-      "transform": "uppercase",
-      "ea_type": "STRING"
-    },
-    {
-      "source_tag": "Owner",
-      "target_ea": "Network_Owner",
-      "default_value": "Unknown",
-      "ea_type": "STRING"
-    }
-  ]
-}
-```
-
-## MCP Server Setup
-
-The MCP server allows Claude Desktop to interact with InfoBlox directly:
-
-1. Build the MCP server:
-```bash
-cd mcp-server
-npm install
-npm run build
-```
-
-2. Add to Claude Desktop config:
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-
-3. Restart Claude Desktop
-
-Available tools in Claude:
-- `infoblox_test_connection`
-- `infoblox_create_network`
-- `infoblox_search_networks`
-- `infoblox_check_overlaps`
-- And more...
-
-## Environment Variables
-
-Key configuration options:
-- `INFOBLOX_GRID_MASTER`: Grid Master IP (default: 192.168.1.222)
-- `INFOBLOX_USERNAME`: API username (default: admin)
-- `INFOBLOX_PASSWORD`: API password (default: infoblox)
-- `INFOBLOX_VERIFY_SSL`: SSL verification (default: false)
-
-## Security Considerations
-
-1. Use environment variables for credentials
-2. Enable SSL verification in production
-3. Implement proper authentication for web interface
-4. Restrict file upload sizes and types
-5. Use network views for access control
-
-## License
-
-This project is licensed under the MIT License.
-
-## Web Interface
-
-The tool now includes a FastAPI-based web interface for easier network import management.
-
-### Starting the Web Interface
-
-```bash
-# Quick start
 ./run_web.sh
-
-# Or manually
-source venv/bin/activate
-python app/web.py
+# Open http://localhost:8000
 ```
 
-Access the web interface at: http://localhost:8000
+## Supported File Formats
 
-### Web Features
-
-- **File Upload**: Drag-and-drop or browse for CSV/Excel files
-- **Source Selection**: Choose between AWS, Properties, or Custom formats
-- **Live Preview**: See what will be created/updated before importing
-- **Progress Tracking**: Real-time import progress with Server-Sent Events
-- **Error Handling**: Detailed error messages for troubleshooting
-
-### API Endpoints
-
-- `GET /` - Web interface
-- `POST /api/v1/import/upload` - Upload network file
-- `GET /api/v1/import/preview/{file_id}` - Preview changes
-- `POST /api/v1/import/execute/{file_id}` - Execute import
-- `GET /api/v1/import/progress/{job_id}` - Stream progress (SSE)
-- `GET /api/v1/jobs/{job_id}` - Get job details
-- `GET /api/v1/test-connection` - Test InfoBlox connection
+### AWS Format
+```csv
+AccountId,Region,VpcId,Name,CidrBlock,IsDefault,State,Tags
+123456,us-east-1,vpc-123,Production,10.0.0.0/16,false,available,"[{""Key"":""Env"",""Value"":""Prod""}]"
+```
 
 ### Properties Format
-
-The Properties format is designed for property/site-based network management:
-
 ```csv
 Property_Name,Network,Description,Environment,Owner,Department
 Downtown Office,10.10.0.0/24,Main office,Production,IT Ops,IT
-Remote Branch,10.20.0.0/24,Branch office,Production,IT Ops,IT
 ```
 
-All columns beyond the standard ones (Property_Name, Network, Description) are automatically converted to Extended Attributes.
+## Configuration
+
+Configuration is managed through environment variables in `.env`:
+- `INFOBLOX_GRID_MASTER`: Grid Master IP address
+- `INFOBLOX_USERNAME`: API username  
+- `INFOBLOX_PASSWORD`: API password
+- `INFOBLOX_NETWORK_VIEW`: Default network view
+
+## MCP Server (Claude Desktop Integration)
+
+The project includes an MCP server for integration with Claude Desktop. See [mcp-server/README.md](mcp-server/README.md) for setup instructions.
+
+## Documentation
+
+- [Configuration Guide](CONFIGURATION.md)
+- [Quick Reference](QUICK_REFERENCE.md)
+- [API Documentation](docs/API.md)
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with FastAPI, Click, and Pydantic
+- Designed for InfoBlox WAPI v2.13.1
+- Inspired by the need for automated network management
