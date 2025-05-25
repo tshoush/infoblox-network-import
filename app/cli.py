@@ -425,5 +425,36 @@ def list_eas():
         console.print(f"[red]Error: {e}[/red]")
 
 
+@cli.command()
+def list_network_views():
+    """List all available network views"""
+    
+    try:
+        api = InfoBloxWAPI()
+        views = api.get_network_views()
+        
+        if not views:
+            console.print("[yellow]No network views found[/yellow]")
+            return
+        
+        table = Table(title="InfoBlox Network Views")
+        table.add_column("Name", style="cyan")
+        table.add_column("Comment", style="yellow")
+        table.add_column("Default", style="green")
+        
+        for view in views:
+            table.add_row(
+                view.get('name', ''),
+                view.get('comment', '')[:40] + "..." if len(view.get('comment', '')) > 40 else view.get('comment', ''),
+                "✓" if view.get('is_default', False) else ""
+            )
+        
+        console.print(table)
+        console.print(f"\n[dim]Current selection: {api.network_view}[/dim]")
+        
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
 if __name__ == '__main__':
     cli()

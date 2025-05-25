@@ -217,6 +217,17 @@ class InfoBloxWAPI:
         response = self._request("GET", "member")
         return response.json()
     
+    # Network View operations
+    def get_network_views(self) -> List[Dict]:
+        """Get all network views"""
+        response = self._request("GET", "networkview")
+        return response.json()
+    
+    def list_network_view_names(self) -> List[str]:
+        """Get list of network view names"""
+        views = self.get_network_views()
+        return [view.get('name', '') for view in views if view.get('name')]
+    
     # Bulk operations
     def bulk_request(self, requests: List[Dict]) -> List[Dict]:
         """Execute multiple requests in a single call"""

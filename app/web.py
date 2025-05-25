@@ -81,7 +81,7 @@ async def root():
     <body class="bg-gray-100">
         <div class="container mx-auto px-4 py-8">
             <h1 class="text-3xl font-bold mb-8">InfoBlox Network Import Tool</h1>
-            <div id="app" x-data="networkImportApp()">
+            <div id="app" x-data="networkImportApp()" x-init="init()">
                 <!-- File Upload Section -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-4">Upload Network File</h2>
@@ -100,8 +100,12 @@ async def root():
                                 </div>
                                 <div>
                                     <label class="font-medium">Network View:</label>
-                                    <input type="text" x-model="settings.networkView" 
-                                           class="w-full p-1 border rounded text-sm">
+                                    <select x-model="settings.networkView" 
+                                            class="w-full p-1 border rounded text-sm">
+                                        <template x-for="view in networkViews" :key="view">
+                                            <option :value="view" x-text="view"></option>
+                                        </template>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="font-medium">Username:</label>
@@ -197,11 +201,39 @@ async def root():
                 status: '',
                 connectionStatus: '',
                 connectionOk: false,
+                networkViews: ['default'],
                 settings: {
                     gridMaster: '""" + os.getenv('INFOBLOX_GRID_MASTER', '192.168.1.222') + """',
                     networkView: '""" + os.getenv('INFOBLOX_NETWORK_VIEW', 'default') + """',
                     username: '""" + os.getenv('INFOBLOX_USERNAME', 'admin') + """',
                     password: '""" + os.getenv('INFOBLOX_PASSWORD', 'infoblox') + """'
+                },
+                
+                async init() {
+                    // Try to fetch network views on load
+                    await this.fetchNetworkViews();
+                },
+                
+                async fetchNetworkViews() {
+                    try {
+                        const response = await fetch('/api/v1/network-views', {
+                            headers: {
+                                'X-Grid-Master': this.settings.gridMaster,
+                                'X-Username': this.settings.username,
+                                'X-Password': this.settings.password
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.network_views && data.network_views.length > 0) {
+                            this.networkViews = data.network_views;
+                            // Set default if current selection is not in list
+                            if (!this.networkViews.includes(this.settings.networkView)) {
+                                this.settings.networkView = data.default || 'default';
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch network views:', error);
+                    }
                 },
                 
                 fileSelected(event) {
@@ -286,6 +318,11 @@ async def root():
                         const data = await response.json();
                         this.connectionOk = data.connected;
                         this.connectionStatus = data.message;
+                        
+                        // If connection successful, fetch network views
+                        if (data.connected) {
+                            await this.fetchNetworkViews();
+                        }
                     } catch (error) {
                         this.connectionOk = false;
                         this.connectionStatus = 'Connection failed: ' + error;
@@ -555,6 +592,18 @@ async def get_job_details(job_id: str):
     
     job = jobs[job_id]
     return job.dict()
+
+
+@app.get("/api/v1/network-views")
+async def get_network_views(request: Request):
+    """Get available network views from InfoBlox"""
+    try:
+        api = get_infoblox_api(request)
+        views = api.list_network_view_names()
+        return {"network_views": views, "default": api.network_view}
+    except Exception as e:
+        logger.error(f"Failed to get network views: {e}")
+        return {"network_views": ["default"], "default": "default", "error": str(e)}
 
 
 @app.get("/api/v1/test-connection")
