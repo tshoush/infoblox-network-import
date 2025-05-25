@@ -1,0 +1,57 @@
+{
+  "description": "Extended Attribute mapping configuration for AWS networks",
+  "mappings": [
+    {
+      "source_tag": "Environment",
+      "target_ea": "Environment",
+      "transform": "uppercase",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "Owner",
+      "target_ea": "Network_Owner",
+      "ea_type": "STRING",
+      "default_value": "Unknown",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "CostCenter",
+      "target_ea": "Cost_Center",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "Project",
+      "target_ea": "Project_Name",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "Compliance",
+      "target_ea": "Compliance_Requirement",
+      "ea_type": "ENUM",
+      "list_values": ["GDPR", "HIPAA", "PCI-DSS", "SOC2", "None"],
+      "default_value": "None",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "AWS_AccountId",
+      "target_ea": "AWS_Account_ID",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "AWS_Region",
+      "target_ea": "AWS_Region",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    },
+    {
+      "source_tag": "AWS_VpcId",
+      "target_ea": "AWS_VPC_ID",
+      "ea_type": "STRING",
+      "create_if_missing": true
+    }
+  ]
+}

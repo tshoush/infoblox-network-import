@@ -1,0 +1,40 @@
+# Core dependencies
+requests>=2.31.0
+urllib3>=2.0.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Data processing
+pandas>=2.0.0
+openpyxl>=3.1.0
+xlrd>=2.0.0
+
+# CLI dependencies
+click>=8.1.0
+rich>=13.0.0
+
+# Web application
+fastapi>=0.100.0
+uvicorn>=0.23.0
+python-multipart>=0.0.6
+aiofiles>=23.0.0
+jinja2>=3.1.0
+
+# Background tasks (optional, for production)
+celery>=5.3.0
+redis>=5.0.0
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+
+# IP address utilities
+netaddr>=0.9.0
+ipaddress  # Built-in, but listed for clarity
+
+# Reporting
+matplotlib>=3.7.0
+reportlab>=4.0.0

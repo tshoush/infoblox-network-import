@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "infoblox": {
+      "command": "node",
+      "args": ["/Users/Shared/infoblox-network-import/mcp-server/dist/index.js"],
+      "env": {
+        "INFOBLOX_GRID_MASTER": "192.168.1.222",
+        "INFOBLOX_USERNAME": "admin",
+        "INFOBLOX_PASSWORD": "infoblox"
+      }
+    }
+  }
+}

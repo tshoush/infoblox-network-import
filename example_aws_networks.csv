@@ -1,0 +1,5 @@
+AccountId,Region,VpcId,Name,CidrBlock,IsDefault,State,DhcpOptionsId,InstanceTenancy,AdditionalCidrBlocks,Tags
+123456789012,us-east-1,vpc-12345678,Production VPC,10.0.0.0/16,false,available,dopt-12345678,default,,"[{""Key"": ""Environment"", ""Value"": ""Production""}, {""Key"": ""Owner"", ""Value"": ""DevOps Team""}, {""Key"": ""CostCenter"", ""Value"": ""IT-001""}]"
+123456789012,us-east-1,vpc-87654321,Development VPC,10.1.0.0/16,false,available,dopt-87654321,default,,"[{""Key"": ""Environment"", ""Value"": ""Development""}, {""Key"": ""Owner"", ""Value"": ""Dev Team""}]"
+123456789012,us-west-2,vpc-abcdef01,Testing VPC,172.16.0.0/16,false,available,dopt-abcdef01,default,,"[{""Key"": ""Environment"", ""Value"": ""Testing""}, {""Key"": ""Project"", ""Value"": ""QA""}]"
+987654321098,eu-west-1,vpc-11111111,EU Production,192.168.0.0/16,false,available,dopt-11111111,default,,"[{""Key"": ""Environment"", ""Value"": ""Production""}, {""Key"": ""Region"", ""Value"": ""EU""}, {""Key"": ""Compliance"", ""Value"": ""GDPR""}]"
