@@ -15,7 +15,7 @@ class NetworkImportModel(BaseModel):
     address: str = Field(..., pattern=r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$')
     description: Optional[str] = ""
     tags: Dict[str, str] = Field(default_factory=dict)
-    source: str = Field(..., pattern=r'^(aws|azure|gcp|alibaba|custom)$')
+    source: str = Field(..., pattern=r'^(aws|azure|gcp|alibaba|properties|custom)$')
     
     # Additional metadata
     account_id: Optional[str] = None
