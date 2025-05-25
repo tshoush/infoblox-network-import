@@ -37,7 +37,7 @@ def cli():
 @click.option('--file', '-f', required=True, type=click.Path(exists=True),
               help='Network file to import (CSV or Excel)')
 @click.option('--source', '-s', required=True,
-              type=click.Choice(['aws', 'azure', 'gcp', 'alibaba', 'custom']),
+              type=click.Choice(['aws', 'azure', 'gcp', 'alibaba', 'properties', 'custom']),
               help='Source cloud provider')
 @click.option('--dry-run', is_flag=True,
               help='Preview changes without applying them')
@@ -320,7 +320,7 @@ def map_tags_to_eas(network: NetworkImportModel, mappings: list) -> dict:
 
 
 @cli.command()
-@click.option('--source', '-s', type=click.Choice(['aws', 'azure', 'gcp', 'alibaba']),
+@click.option('--source', '-s', type=click.Choice(['aws', 'azure', 'gcp', 'alibaba', 'properties']),
               help='Source cloud provider for template')
 @click.option('--output', '-o', default='ea_mappings.json',
               help='Output file for mapping template')
@@ -339,6 +339,16 @@ def generate_mapping_template(source, output):
             {"source_tag": "Name", "target_ea": "Name", "ea_type": "STRING"},
             {"source_tag": "Environment", "target_ea": "Environment", "ea_type": "STRING"},
             {"source_tag": "ResourceGroup", "target_ea": "Azure RG", "ea_type": "STRING"},
+        ],
+        'properties': [
+            {"source_tag": "Environment", "target_ea": "Environment", "ea_type": "STRING"},
+            {"source_tag": "Owner", "target_ea": "Network_Owner", "ea_type": "STRING"},
+            {"source_tag": "Department", "target_ea": "Department", "ea_type": "STRING"},
+            {"source_tag": "Cost_Center", "target_ea": "Cost_Center", "ea_type": "STRING"},
+            {"source_tag": "Site_Type", "target_ea": "Site_Type", "ea_type": "ENUM", 
+             "list_values": ["Office", "Branch", "Datacenter", "Lab", "Cloud"]},
+            {"source_tag": "Compliance", "target_ea": "Compliance", "ea_type": "ENUM",
+             "list_values": ["GDPR", "HIPAA", "PCI-DSS", "SOC2", "None"]},
         ]
     }
     
