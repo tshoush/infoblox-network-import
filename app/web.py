@@ -82,6 +82,13 @@ async def root():
         <div class="container mx-auto px-4 py-8">
             <h1 class="text-3xl font-bold mb-8">InfoBlox Network Import Tool</h1>
             <div id="app" x-data="networkImportApp()" x-init="init()">
+                <!-- Connection Status Banner -->
+                <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-6" x-show="!connectionOk && connectionStatus">
+                    <p class="text-sm">
+                        <span class="font-bold">Connection Status:</span> 
+                        <span x-text="connectionStatus"></span>
+                    </p>
+                </div>
                 <!-- File Upload Section -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-4">Upload Network File</h2>
@@ -137,6 +144,16 @@ async def root():
                             </select>
                         </div>
                         <div class="mb-4">
+                            <label class="block text-sm font-medium mb-2">Network View</label>
+                            <select x-model="settings.networkView" 
+                                    class="w-full p-2 border rounded bg-blue-50">
+                                <template x-for="view in networkViews" :key="view">
+                                    <option :value="view" x-text="view"></option>
+                                </template>
+                            </select>
+                            <p class="text-xs text-gray-600 mt-1">Select the InfoBlox network view to import into</p>
+                        </div>
+                        <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">Network File</label>
                             <input type="file" @change="fileSelected" accept=".csv,.xlsx,.xls"
                                    class="w-full p-2 border rounded">
@@ -151,6 +168,10 @@ async def root():
                 <!-- Preview Section -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6" x-show="previewData">
                     <h2 class="text-xl font-semibold mb-4">Import Preview</h2>
+                    <div class="mb-4 p-3 bg-blue-50 rounded">
+                        <span class="text-sm font-medium">Target Network View:</span>
+                        <span class="text-sm font-bold text-blue-700" x-text="settings.networkView"></span>
+                    </div>
                     <div class="grid grid-cols-4 gap-4 mb-4">
                         <div class="text-center">
                             <div class="text-2xl font-bold text-green-600" x-text="previewData?.new_networks?.length || 0"></div>
@@ -178,6 +199,9 @@ async def root():
                 <!-- Progress Section -->
                 <div class="bg-white rounded-lg shadow-md p-6" x-show="jobId">
                     <h2 class="text-xl font-semibold mb-4">Import Progress</h2>
+                    <div class="mb-2 text-sm text-gray-600">
+                        Importing to Network View: <span class="font-bold" x-text="settings.networkView"></span>
+                    </div>
                     <div class="mb-4">
                         <div class="bg-gray-200 rounded-full h-4">
                             <div class="bg-blue-600 h-4 rounded-full transition-all duration-300"
