@@ -12,6 +12,13 @@ python app/cli.py test-connection
 python list_infoblox_networks.py
 ```
 
+### List Network Views
+```bash
+python app/cli.py list-network-views
+# or
+python list_network_views.py
+```
+
 ### Import Networks (Dry Run)
 ```bash
 # AWS format
@@ -19,6 +26,9 @@ python app/cli.py import-networks -f example_aws_networks.csv -s aws --dry-run
 
 # Properties format
 python app/cli.py import-networks -f example_properties_networks.csv -s properties --dry-run
+
+# Specific network view
+python app/cli.py import-networks -f file.csv -s aws --network-view Production --dry-run
 ```
 
 ### Import Networks (For Real)
