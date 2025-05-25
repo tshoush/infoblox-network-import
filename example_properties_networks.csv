@@ -1,0 +1,11 @@
+Property_Name,Network,Description,Environment,Owner,Department,Cost_Center,Compliance,Site_Type,Region,Contact_Email
+Downtown Office,10.10.0.0/24,Main corporate office network,Production,IT Operations,Information Technology,IT-001,SOC2,Office,US-East,itops@company.com
+Remote Branch 1,10.20.0.0/24,Branch office network - West,Production,IT Operations,Information Technology,IT-002,None,Branch,US-West,itops@company.com
+Data Center Primary,172.16.0.0/20,Primary data center infrastructure,Production,Data Center Ops,Infrastructure,DC-001,PCI-DSS,Datacenter,US-Central,dcops@company.com
+Development Lab,192.168.100.0/24,Development and testing environment,Development,DevOps Team,Engineering,ENG-001,None,Lab,US-East,devops@company.com
+Guest WiFi Network,10.99.0.0/22,Guest wireless network segment,Production,Network Team,Information Technology,IT-003,None,Office,US-East,network@company.com
+Cloud Transit VPC,10.200.0.0/16,AWS Direct Connect transit network,Production,Cloud Team,Cloud Operations,CLOUD-001,SOC2,Cloud,AWS-us-east-1,cloud@company.com
+Azure Hub Network,10.201.0.0/16,Azure hub for spoke networks,Production,Cloud Team,Cloud Operations,CLOUD-002,SOC2,Cloud,Azure-EastUS,cloud@company.com
+DMZ Network,172.31.0.0/24,Demilitarized zone for public services,Production,Security Team,Information Security,SEC-001,PCI-DSS,Datacenter,US-Central,security@company.com
+IoT Segment,10.50.0.0/23,Internet of Things device network,Production,IoT Team,Operations,OPS-001,None,Office,US-East,iot@company.com
+Backup Network,172.20.0.0/24,Dedicated backup traffic network,Production,Backup Team,Infrastructure,INF-001,SOC2,Datacenter,US-Central,backup@company.com

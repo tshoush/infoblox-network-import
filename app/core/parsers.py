@@ -21,6 +21,7 @@ class CloudNetworkParser:
             'azure': self._parse_azure_format,
             'gcp': self._parse_gcp_format,
             'alibaba': self._parse_alibaba_format,
+            'properties': self._parse_properties_format,
             'custom': self._parse_custom_csv
         }
     
@@ -127,4 +128,151 @@ class CloudNetworkParser:
             except Exception as e:
                 logger.error(f"Error parsing Azure row {idx}: {e}")
         
+        return networks
+    
+    def _parse_gcp_format(self, df: pd.DataFrame) -> List[NetworkImportModel]:
+        """Parse GCP network export format - placeholder"""
+        logger.warning("GCP parser not implemented yet")
+        return []
+    
+    def _parse_alibaba_format(self, df: pd.DataFrame) -> List[NetworkImportModel]:
+        """Parse Alibaba Cloud network export format - placeholder"""
+        logger.warning("Alibaba parser not implemented yet")
+        return []
+    
+    def _parse_properties_format(self, df: pd.DataFrame) -> List[NetworkImportModel]:
+        """
+        Parse Properties format CSV
+        This format typically has columns like:
+        - Property Name/Address
+        - Network/CIDR
+        - Description
+        - Environment
+        - Owner
+        - Additional custom properties as columns
+        """
+        networks = []
+        
+        for idx, row in df.iterrows():
+            try:
+                # Extract network info - adjust column names based on actual format
+                network_address = None
+                name = None
+                
+                # Try different possible column names for network/CIDR
+                for col in ['Network', 'CIDR', 'Address', 'IP_Range', 'Subnet']:
+                    if col in df.columns and pd.notna(row.get(col)):
+                        network_address = str(row[col]).strip()
+                        break
+                
+                # Try different possible column names for name
+                for col in ['Name', 'Property', 'Property_Name', 'Site', 'Location']:
+                    if col in df.columns and pd.notna(row.get(col)):
+                        name = str(row[col]).strip()
+                        break
+                
+                if not network_address:
+                    logger.warning(f"No network address found in row {idx}")
+                    continue
+                
+                # Get description
+                description = row.get('Description', row.get('Comments', ''))
+                if pd.isna(description):
+                    description = ''
+                
+                # Extract all other columns as tags
+                tags = {}
+                standard_cols = ['Network', 'CIDR', 'Address', 'IP_Range', 'Subnet', 
+                               'Name', 'Property', 'Property_Name', 'Site', 'Location',
+                               'Description', 'Comments']
+                
+                for col in df.columns:
+                    if col not in standard_cols and pd.notna(row.get(col)):
+                        # Clean up column name for tag key
+                        tag_key = col.strip().replace(' ', '_').replace('-', '_')
+                        tags[tag_key] = str(row[col]).strip()
+                
+                # Create network model
+                network = NetworkImportModel(
+                    name=name or f"property-{idx}",
+                    address=network_address,
+                    description=str(description),
+                    tags=tags,
+                    source='properties'
+                )
+                
+                networks.append(network)
+                
+            except Exception as e:
+                logger.error(f"Error parsing Properties row {idx}: {e}")
+                logger.debug(f"Row data: {row.to_dict()}")
+        
+        logger.info(f"Parsed {len(networks)} networks from Properties format")
+        return networks
+    
+    def _parse_custom_csv(self, df: pd.DataFrame) -> List[NetworkImportModel]:
+        """
+        Parse custom CSV format
+        Attempts to intelligently map columns to network attributes
+        """
+        networks = []
+        
+        # Log available columns for debugging
+        logger.info(f"Custom CSV columns: {list(df.columns)}")
+        
+        for idx, row in df.iterrows():
+            try:
+                # Try to find network/CIDR column
+                network_address = None
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if any(term in col_lower for term in ['network', 'cidr', 'subnet', 'address', 'ip']):
+                        if pd.notna(row[col]) and '/' in str(row[col]):
+                            network_address = str(row[col]).strip()
+                            break
+                
+                if not network_address:
+                    logger.warning(f"No valid network address found in row {idx}")
+                    continue
+                
+                # Try to find name column
+                name = None
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if any(term in col_lower for term in ['name', 'label', 'title']):
+                        if pd.notna(row[col]):
+                            name = str(row[col]).strip()
+                            break
+                
+                # Try to find description
+                description = ''
+                for col in df.columns:
+                    col_lower = col.lower()
+                    if any(term in col_lower for term in ['desc', 'comment', 'note']):
+                        if pd.notna(row[col]):
+                            description = str(row[col]).strip()
+                            break
+                
+                # All other columns become tags
+                tags = {}
+                for col in df.columns:
+                    if pd.notna(row[col]):
+                        tag_key = col.strip().replace(' ', '_').replace('-', '_')
+                        tags[tag_key] = str(row[col]).strip()
+                
+                # Create network model
+                network = NetworkImportModel(
+                    name=name or f"network-{idx}",
+                    address=network_address,
+                    description=description,
+                    tags=tags,
+                    source='custom'
+                )
+                
+                networks.append(network)
+                
+            except Exception as e:
+                logger.error(f"Error parsing custom CSV row {idx}: {e}")
+        
+        logger.info(f"Parsed {len(networks)} networks from custom CSV")
         return networks

@@ -169,3 +169,50 @@ Key configuration options:
 ## License
 
 This project is licensed under the MIT License.
+
+## Web Interface
+
+The tool now includes a FastAPI-based web interface for easier network import management.
+
+### Starting the Web Interface
+
+```bash
+# Quick start
+./run_web.sh
+
+# Or manually
+source venv/bin/activate
+python app/web.py
+```
+
+Access the web interface at: http://localhost:8000
+
+### Web Features
+
+- **File Upload**: Drag-and-drop or browse for CSV/Excel files
+- **Source Selection**: Choose between AWS, Properties, or Custom formats
+- **Live Preview**: See what will be created/updated before importing
+- **Progress Tracking**: Real-time import progress with Server-Sent Events
+- **Error Handling**: Detailed error messages for troubleshooting
+
+### API Endpoints
+
+- `GET /` - Web interface
+- `POST /api/v1/import/upload` - Upload network file
+- `GET /api/v1/import/preview/{file_id}` - Preview changes
+- `POST /api/v1/import/execute/{file_id}` - Execute import
+- `GET /api/v1/import/progress/{job_id}` - Stream progress (SSE)
+- `GET /api/v1/jobs/{job_id}` - Get job details
+- `GET /api/v1/test-connection` - Test InfoBlox connection
+
+### Properties Format
+
+The Properties format is designed for property/site-based network management:
+
+```csv
+Property_Name,Network,Description,Environment,Owner,Department
+Downtown Office,10.10.0.0/24,Main office,Production,IT Ops,IT
+Remote Branch,10.20.0.0/24,Branch office,Production,IT Ops,IT
+```
+
+All columns beyond the standard ones (Property_Name, Network, Description) are automatically converted to Extended Attributes.
