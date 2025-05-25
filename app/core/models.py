@@ -6,6 +6,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import ipaddress
 import json
+import pandas as pd
 
 
 class NetworkImportModel(BaseModel):
@@ -46,6 +47,14 @@ class AWSNetworkModel(BaseModel):
     InstanceTenancy: Optional[str] = None
     AdditionalCidrBlocks: Optional[str] = None
     Tags: Optional[str] = None  # JSON string of tags
+    
+    @field_validator('AdditionalCidrBlocks', 'DhcpOptionsId', 'InstanceTenancy', 'Tags', 'Name', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert pandas nan and empty strings to None"""
+        if pd.isna(v) or v == '':
+            return None
+        return str(v) if v is not None else None
     
     def to_import_model(self) -> NetworkImportModel:
         """Convert AWS model to unified import model"""

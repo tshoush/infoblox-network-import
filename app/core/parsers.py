@@ -59,19 +59,22 @@ class CloudNetworkParser:
         
         for idx, row in df.iterrows():
             try:
+                # Handle pandas NaN values
+                row_dict = row.where(pd.notnull(row), None).to_dict()
+                
                 # Create AWS model from row
                 aws_network = AWSNetworkModel(
-                    AccountId=row.get('AccountId'),
-                    Region=row.get('Region', ''),
-                    VpcId=row.get('VpcId', ''),
-                    Name=row.get('Name'),
-                    CidrBlock=row.get('CidrBlock', ''),
-                    IsDefault=bool(row.get('IsDefault', False)),
-                    State=row.get('State', 'available'),
-                    DhcpOptionsId=row.get('DhcpOptionsId'),
-                    InstanceTenancy=row.get('InstanceTenancy'),
-                    AdditionalCidrBlocks=row.get('AdditionalCidrBlocks'),
-                    Tags=row.get('Tags')
+                    AccountId=row_dict.get('AccountId'),
+                    Region=row_dict.get('Region', ''),
+                    VpcId=row_dict.get('VpcId', ''),
+                    Name=row_dict.get('Name'),
+                    CidrBlock=row_dict.get('CidrBlock', ''),
+                    IsDefault=bool(row_dict.get('IsDefault', False)),
+                    State=row_dict.get('State', 'available'),
+                    DhcpOptionsId=row_dict.get('DhcpOptionsId'),
+                    InstanceTenancy=row_dict.get('InstanceTenancy'),
+                    AdditionalCidrBlocks=row_dict.get('AdditionalCidrBlocks'),
+                    Tags=row_dict.get('Tags')
                 )
                 
                 # Convert to import model
