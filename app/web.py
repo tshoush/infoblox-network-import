@@ -1,7 +1,7 @@
 """
 FastAPI Web Application for InfoBlox Network Import
 """
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Depends, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,8 +55,15 @@ REPORT_DIR.mkdir(exist_ok=True)
 jobs: Dict[str, ImportJob] = {}
 
 # Global InfoBlox API instance (in production, use dependency injection)
-def get_infoblox_api():
-    """Get InfoBlox API instance"""
+def get_infoblox_api(request=None):
+    """Get InfoBlox API instance with optional overrides from request headers"""
+    if request and hasattr(request, 'headers'):
+        return InfoBloxWAPI(
+            grid_master=request.headers.get('X-Grid-Master'),
+            username=request.headers.get('X-Username'),
+            password=request.headers.get('X-Password'),
+            network_view=request.headers.get('X-Network-View')
+        )
     return InfoBloxWAPI()
 
 
@@ -78,6 +85,44 @@ async def root():
                 <!-- File Upload Section -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-4">Upload Network File</h2>
+                    
+                    <!-- Connection Settings -->
+                    <details class="mb-4">
+                        <summary class="cursor-pointer text-sm text-blue-600 hover:text-blue-800">
+                            ⚙️ InfoBlox Connection Settings
+                        </summary>
+                        <div class="mt-2 p-4 bg-gray-50 rounded">
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <label class="font-medium">Grid Master:</label>
+                                    <input type="text" x-model="settings.gridMaster" 
+                                           class="w-full p-1 border rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="font-medium">Network View:</label>
+                                    <input type="text" x-model="settings.networkView" 
+                                           class="w-full p-1 border rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="font-medium">Username:</label>
+                                    <input type="text" x-model="settings.username" 
+                                           class="w-full p-1 border rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="font-medium">Password:</label>
+                                    <input type="password" x-model="settings.password" 
+                                           class="w-full p-1 border rounded text-sm">
+                                </div>
+                            </div>
+                            <button @click="testConnection" class="mt-2 text-sm bg-gray-600 text-white px-3 py-1 rounded">
+                                Test Connection
+                            </button>
+                            <span x-show="connectionStatus" x-text="connectionStatus" 
+                                  :class="connectionOk ? 'text-green-600' : 'text-red-600'" 
+                                  class="ml-2 text-sm"></span>
+                        </div>
+                    </details>
+                    
                     <form @submit.prevent="uploadFile">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-2">Source Type</label>
@@ -150,6 +195,14 @@ async def root():
                 jobId: null,
                 progress: 0,
                 status: '',
+                connectionStatus: '',
+                connectionOk: false,
+                settings: {
+                    gridMaster: '""" + os.getenv('INFOBLOX_GRID_MASTER', '192.168.1.222') + """',
+                    networkView: '""" + os.getenv('INFOBLOX_NETWORK_VIEW', 'default') + """',
+                    username: '""" + os.getenv('INFOBLOX_USERNAME', 'admin') + """',
+                    password: '""" + os.getenv('INFOBLOX_PASSWORD', 'infoblox') + """'
+                },
                 
                 fileSelected(event) {
                     this.selectedFile = event.target.files[0];
@@ -178,7 +231,17 @@ async def root():
                     if (!this.fileId) return;
                     
                     try {
-                        const response = await fetch(`/api/v1/import/preview/${this.fileId}?source_type=${this.sourceType}`);
+                        const params = new URLSearchParams({
+                            source_type: this.sourceType,
+                            network_view: this.settings.networkView
+                        });
+                        const response = await fetch(`/api/v1/import/preview/${this.fileId}?${params}`, {
+                            headers: {
+                                'X-Grid-Master': this.settings.gridMaster,
+                                'X-Username': this.settings.username,
+                                'X-Password': this.settings.password
+                            }
+                        });
                         this.previewData = await response.json();
                     } catch (error) {
                         alert('Preview failed: ' + error);
@@ -189,14 +252,43 @@ async def root():
                     if (!this.fileId) return;
                     
                     try {
-                        const response = await fetch(`/api/v1/import/execute/${this.fileId}?source_type=${this.sourceType}`, {
-                            method: 'POST'
+                        const params = new URLSearchParams({
+                            source_type: this.sourceType,
+                            network_view: this.settings.networkView
+                        });
+                        const response = await fetch(`/api/v1/import/execute/${this.fileId}?${params}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Grid-Master': this.settings.gridMaster,
+                                'X-Username': this.settings.username,
+                                'X-Password': this.settings.password
+                            }
                         });
                         const data = await response.json();
                         this.jobId = data.job_id;
                         this.trackProgress();
                     } catch (error) {
                         alert('Import failed: ' + error);
+                    }
+                },
+                
+                async testConnection() {
+                    this.connectionStatus = 'Testing...';
+                    try {
+                        const response = await fetch('/api/v1/test-connection', {
+                            headers: {
+                                'X-Grid-Master': this.settings.gridMaster,
+                                'X-Username': this.settings.username,
+                                'X-Password': this.settings.password,
+                                'X-Network-View': this.settings.networkView
+                            }
+                        });
+                        const data = await response.json();
+                        this.connectionOk = data.connected;
+                        this.connectionStatus = data.message;
+                    } catch (error) {
+                        this.connectionOk = false;
+                        this.connectionStatus = 'Connection failed: ' + error;
                     }
                 },
                 
@@ -245,7 +337,7 @@ async def upload_file(file: UploadFile = File(...)):
 
 
 @app.get("/api/v1/import/preview/{file_id}")
-async def preview_import(file_id: str, source_type: str = "aws"):
+async def preview_import(file_id: str, source_type: str = "aws", network_view: str = "default", request: Request):
     """Preview import changes"""
     # Find the uploaded file
     files = list(UPLOAD_DIR.glob(f"{file_id}_*"))
@@ -259,9 +351,9 @@ async def preview_import(file_id: str, source_type: str = "aws"):
         parser = CloudNetworkParser()
         networks = parser.parse_file(str(file_path), source_type)
         
-        # Analyze changes
-        api = get_infoblox_api()
-        analysis = await analyze_network_changes(api, networks)
+        # Analyze changes with custom API settings
+        api = get_infoblox_api(request)
+        analysis = await analyze_network_changes(api, networks, network_view)
         
         return analysis
         
@@ -270,7 +362,7 @@ async def preview_import(file_id: str, source_type: str = "aws"):
         raise HTTPException(500, f"Preview failed: {str(e)}")
 
 
-async def analyze_network_changes(api: InfoBloxWAPI, networks: List[NetworkImportModel]) -> Dict:
+async def analyze_network_changes(api: InfoBloxWAPI, networks: List[NetworkImportModel], network_view: str = "default") -> Dict:
     """Analyze what changes would be made"""
     analysis = {
         'new_networks': [],
@@ -282,7 +374,8 @@ async def analyze_network_changes(api: InfoBloxWAPI, networks: List[NetworkImpor
     for network in networks:
         try:
             # Check if network exists
-            existing = api.get_network(network.address, return_fields=['network', 'comment', 'extattrs'])
+            existing = api.get_network(network.address, network_view=network_view, 
+                                     return_fields=['network', 'comment', 'extattrs'])
             
             if existing:
                 # Check for differences
@@ -293,7 +386,7 @@ async def analyze_network_changes(api: InfoBloxWAPI, networks: List[NetworkImpor
                     })
             else:
                 # Check for overlaps
-                overlaps = api.check_network_overlaps(network.address)
+                overlaps = api.check_network_overlaps(network.address, network_view=network_view)
                 if overlaps:
                     analysis['overlapping_networks'].append({
                         'network': network.dict(),
@@ -325,7 +418,8 @@ def has_changes(existing: dict, new: NetworkImportModel) -> bool:
 
 
 @app.post("/api/v1/import/execute/{file_id}")
-async def execute_import(file_id: str, source_type: str, background_tasks: BackgroundTasks):
+async def execute_import(file_id: str, source_type: str, network_view: str = "default", 
+                        background_tasks: BackgroundTasks, request: Request):
     """Execute import in background"""
     # Create job
     job_id = str(uuid.uuid4())
@@ -336,15 +430,23 @@ async def execute_import(file_id: str, source_type: str, background_tasks: Backg
     )
     jobs[job_id] = job
     
+    # Get connection settings from headers
+    settings = {
+        'grid_master': request.headers.get('X-Grid-Master'),
+        'username': request.headers.get('X-Username'),
+        'password': request.headers.get('X-Password'),
+        'network_view': network_view
+    }
+    
     # Start background task
     background_tasks.add_task(
-        process_import_task, job_id, file_id, source_type
+        process_import_task, job_id, file_id, source_type, settings
     )
     
     return {"job_id": job_id, "status": "queued"}
 
 
-async def process_import_task(job_id: str, file_id: str, source_type: str):
+async def process_import_task(job_id: str, file_id: str, source_type: str, settings: dict):
     """Background task to process import"""
     job = jobs[job_id]
     job.status = "processing"
@@ -362,8 +464,13 @@ async def process_import_task(job_id: str, file_id: str, source_type: str):
         networks = parser.parse_file(str(file_path), source_type)
         job.total_networks = len(networks)
         
-        # Get API instance
-        api = get_infoblox_api()
+        # Get API instance with custom settings
+        api = InfoBloxWAPI(
+            grid_master=settings.get('grid_master'),
+            username=settings.get('username'),
+            password=settings.get('password')
+        )
+        network_view = settings.get('network_view', 'default')
         
         # Process networks
         for i, network in enumerate(networks):
@@ -377,6 +484,7 @@ async def process_import_task(job_id: str, file_id: str, source_type: str):
                 # Create network
                 api.create_network(
                     network.address,
+                    network_view=network_view,
                     comment=network.description,
                     extattrs=extattrs
                 )
@@ -450,12 +558,12 @@ async def get_job_details(job_id: str):
 
 
 @app.get("/api/v1/test-connection")
-async def test_connection():
+async def test_connection(request: Request):
     """Test InfoBlox connection"""
     try:
-        api = get_infoblox_api()
+        api = get_infoblox_api(request)
         if api.test_connection():
-            return {"connected": True, "message": "Successfully connected to InfoBlox"}
+            return {"connected": True, "message": f"Successfully connected to InfoBlox at {api.grid_master}"}
         else:
             return {"connected": False, "message": "Connection failed"}
     except Exception as e:

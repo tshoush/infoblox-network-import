@@ -22,6 +22,7 @@ class InfoBloxWAPI:
                  grid_master: str = None,
                  username: str = None,
                  password: str = None,
+                 network_view: str = None,
                  wapi_version: str = "2.13.1",
                  verify_ssl: bool = False,
                  timeout: int = 30):
@@ -32,6 +33,7 @@ class InfoBloxWAPI:
             grid_master: Grid Master IP or hostname
             username: API username
             password: API password
+            network_view: Default network view
             wapi_version: WAPI version
             verify_ssl: Whether to verify SSL certificates
             timeout: Request timeout in seconds
@@ -39,6 +41,7 @@ class InfoBloxWAPI:
         self.grid_master = grid_master or os.getenv('INFOBLOX_GRID_MASTER', '192.168.1.222')
         self.username = username or os.getenv('INFOBLOX_USERNAME', 'admin')
         self.password = password or os.getenv('INFOBLOX_PASSWORD', 'infoblox')
+        self.network_view = network_view or os.getenv('INFOBLOX_NETWORK_VIEW', 'default')
         self.wapi_version = wapi_version
         self.verify_ssl = verify_ssl
         self.timeout = timeout
