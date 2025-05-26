@@ -69,6 +69,40 @@ def import_networks(file, source, dry_run, no_confirm, mapping_file, network_vie
         console.print(f"[red]✗ Failed to connect to InfoBlox: {e}[/red]")
         return
     
+    # Handle network view selection
+    if network_view == 'default' and not no_confirm:
+        try:
+            views = api.list_network_view_names()
+            if len(views) > 1:
+                console.print("\n[cyan]Available Network Views:[/cyan]")
+                table = Table(show_header=False, box=None)
+                table.add_column("", style="dim", width=3)
+                table.add_column("", style="cyan")
+                table.add_column("", style="yellow")
+                
+                for i, view in enumerate(views, 1):
+                    is_default = "← current default" if view == api.network_view else ""
+                    table.add_row(f"{i}.", view, is_default)
+                
+                console.print(table)
+                console.print(f"\n[dim]Press Enter for '{api.network_view}' or enter number:[/dim]")
+                
+                choice = input("Select network view: ").strip()
+                
+                if choice.isdigit() and 1 <= int(choice) <= len(views):
+                    network_view = views[int(choice) - 1]
+                    console.print(f"[green]✓[/green] Selected: {network_view}\n")
+                elif choice == "":
+                    network_view = api.network_view
+                    console.print(f"[green]✓[/green] Using default: {network_view}\n")
+                else:
+                    console.print(f"[yellow]Invalid selection, using: {api.network_view}[/yellow]\n")
+                    network_view = api.network_view
+        except Exception as e:
+            console.print(f"[yellow]Note: Could not fetch network views: {e}[/yellow]")
+    else:
+        console.print(f"[dim]Network view: {network_view}[/dim]\n")
+    
     # Parse file
     try:
         parser = CloudNetworkParser()
